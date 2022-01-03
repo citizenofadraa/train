@@ -4,5 +4,5 @@ project(train C)
 set(CMAKE_C_STANDARD 99)
 
 add_executable(train main.c)
-add_executable(server server.c)
-add_executable(client client.c)
+add_executable(server server.c fileManager.c socketManager.c registrationManager.c signingManager.c)
+add_executable(client client.c fileManager.c socketManager.c registrationManager.c signingManager.c)
