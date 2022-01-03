@@ -16,12 +16,10 @@ int readSocket(char *buffer, int n, int newsockfd){
         perror("Error reading from socket");
         return 4;
     }
-    printf("Here is the message: %s\n", buffer);
     return 0;
 }
 
-int writeSocket(int n, int newsockfd){
-    const char* msg = "I got your message";
+int writeSocket(int n, int newsockfd, char* msg){
     n = write(newsockfd, msg, strlen(msg)+1);
     if (n < 0)
     {
@@ -45,31 +43,18 @@ int getLinesCount(){
     return linesCount;
 }
 
-void readFile(char* users, int size){
-    FILE *fp;
-    char buff[255];
-
-    int index = 0;
-    char* usrs[size];
-
-    fp = fopen("C:\\Users\\Martin\\CLionProjects\\train\\test.txt", "r");
-    while(fgets(buff, 255, (FILE*)fp) != NULL){
-        char* user = buff;
-        usrs[index] = strdup(user);
-        index++;
-    }
-    fclose(fp);
-
-    for (int i = 0; i < size; ++i) {
-        users[i] = usrs[i];
-    }
-}
 
 int main(int argc, char *argv[])
 {
     int size = getLinesCount();
-    char* users[size+2];
-    readFile(users, size);
+    char *users[size];
+    FILE *fp;
+    char buff[255];
+
+    int index = 0;
+    char* tokenLogin;
+    char* tokenPassword;
+    char* msg;
 
     int sockfd, newsockfd;
     socklen_t cli_len;
@@ -111,26 +96,127 @@ int main(int argc, char *argv[])
         return 3;
     }
 
-    int status = readSocket(buffer, n, newsockfd);
-    bool exists = false;
-    if (status == 0){
-        for (int i = 0; i < sizeof(users)/sizeof(char) * 2; ++i) {
-            char* user = users[i];
-            char * token = strtok(user, " ");
+    fp = fopen("C:\\Users\\Martin\\CLionProjects\\train\\test.txt", "r");
+    while(fgets(buff, 255, fp)){
+        int length = strlen(buff);
+        users[index] = (char*)malloc((length+1) * sizeof(char));
+        memcpy(users[index], buff, length+1);
+        index++;
+    }
 
-            if (i%2 == 0){
-                if (buffer == token){
-                    exists = true;
+    readSocket(buffer, n, newsockfd);
+    char* haveAccount = strtok(buffer, "\n");
+    if (strcmp(haveAccount,"n")==0){
+        readSocket(buffer, n, newsockfd);
+        char* create = strtok(buffer, "\n");
+        if (strcmp(create,"n")==0){
+            return 9;
+        } else{
+            bool existsLogin = false;
+
+            msg = "Enter login: ";
+            writeSocket(n, newsockfd, msg);
+            readSocket(buffer, n, newsockfd);
+            tokenLogin = strtok(buffer, "\n");
+
+            for (int i = 0; i < size; ++i) {
+                int length = strlen(users[i]);
+                char *user = (char*)malloc((length+1) * sizeof(char));
+                memcpy(user, users[i], length+1);
+                char* login = strtok(user, " ");
+                if (strcmp(login, tokenLogin) == 0){
+                    existsLogin = true;
                     break;
                 }
             }
-            while( token != NULL ) {
-                token = strtok(NULL, " ");
+
+            if (existsLogin == true){
+                msg = "not success";
+                writeSocket(n, newsockfd, msg);
+                return 11;
+            } else{
+                msg = "success";
+                writeSocket(n, newsockfd, msg);
             }
+
+            msg = "Enter password: ";
+            writeSocket(n, newsockfd, msg);
+            readSocket(buffer, n, newsockfd);
+            tokenPassword = strtok(buffer, "\n");
+
+            fp = fopen("C:\\Users\\Martin\\CLionProjects\\train\\test.txt", "a");
+            fprintf(fp, "%s %s\n", tokenLogin, tokenPassword);
+            fclose(fp);
         }
     }
 
-    writeSocket(n, newsockfd);
+    for (int i = 0; i < size; ++i) {
+        printf("%s \n", users[i]);
+    }
+
+    msg = "Do you want signed in?(y|n) ";
+    writeSocket(n, newsockfd, msg);
+    readSocket(buffer, n, newsockfd);
+    char* signin = strtok(buffer, "\n");
+    if (strcmp(signin,"n")==0){
+        return 10;
+    }
+
+    fp = fopen("C:\\Users\\Martin\\CLionProjects\\train\\test.txt", "r");
+    while(fgets(buff, 255, fp)){
+        int length = strlen(buff);
+        users[index] = (char*)malloc((length+1) * sizeof(char));
+        memcpy(users[index], buff, length+1);
+        index++;
+    }
+    fclose(fp);
+
+    readSocket(buffer, n, newsockfd);
+    bool exists = false;
+    for (int i = 0; i < (size-1); ++i) {
+        int length = strlen(users[i]);
+        char *user = (char*)malloc((length+1) * sizeof(char));
+        memcpy(user, users[i], length+1);
+        tokenLogin = strtok(user, " ");
+        tokenPassword = strtok(NULL, " ");
+        char* login = strtok(buffer, "\n");
+
+        if (strcmp(buffer, tokenLogin) == 0){
+            exists = true;
+            index = i;
+            break;
+        }
+    }
+
+    if (exists == false){
+        msg = "not success";
+        writeSocket(n, newsockfd, msg);
+        printf("You have no account with login %s \n", buffer);
+        return 7;
+    } else{
+        msg = "success";
+        writeSocket(n, newsockfd, msg);
+    }
+
+    readSocket(buffer,n,newsockfd);
+    exists = false;
+
+    tokenPassword = strtok(tokenPassword, "\n");
+    char* password = strtok(buffer, "\n");
+
+    if (strcmp(buffer, tokenPassword) == 0){
+        exists = true;
+    }
+
+    if (exists == false){
+        msg = "not success";
+        writeSocket(n, newsockfd, msg);
+        printf("You have not account with password %s \n", password);
+        return 8;
+    } else{
+        msg = "success";
+        writeSocket(n, newsockfd, msg);
+    }
 
     close(newsockfd);
     close(sockfd);
