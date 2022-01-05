@@ -62,6 +62,7 @@ int main(int argc, char *argv[])
     printf("4 Add contact\n");
     printf("5 Delete contact\n");
     printf("6 Start group conversation\n");
+    printf("7 Read message\n");
     printf("9 Log out\n");
 
     bzero(buffer,256);
@@ -76,7 +77,22 @@ int main(int argc, char *argv[])
             }
         case 2:
         {
-            break;
+            printf("Enter login of target: ");
+            bzero(buffer,256);
+            fgets(buffer, 255, stdin);
+            writeSocketClient(n, sockfd, buffer);
+
+            readSocketClient(n, sockfd, buffer);
+            if (strcmp(buffer,"not success") != 0){
+                printf("Enter message: ");
+                bzero(buffer,256);
+                fgets(buffer, 255, stdin);
+                writeSocketClient(n, sockfd, buffer);
+                break;
+            } else {
+                printf("This login does not exists \n");
+                return 7;
+            }
         }
         case 3:
         {
@@ -92,6 +108,12 @@ int main(int argc, char *argv[])
         }
         case 6:
         {
+            break;
+        }
+        case 7:
+        {
+            readSocketClient(n, sockfd, buffer);
+            printf("%s", buffer);
             break;
         }
         case 9:
