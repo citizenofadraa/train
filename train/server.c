@@ -8,10 +8,20 @@
 
 typedef struct data {
     int sockfd;
-    int descriptors[10];
+    int descriptors[50];
 } D;
 
+char* getLoginByIndex(char* user){
+    int length = strlen(user);
+    char *usr = (char*)malloc((length+1) * sizeof(char));
+    memcpy(usr, user, length+1);
+    char* login = strtok(user, " ");
+
+    return login;
+}
+
 void* clientCommunication(void *data) {
+
     D *d = data;
 
     int newsockfd = 0;
@@ -19,6 +29,7 @@ void* clientCommunication(void *data) {
 
     int size = getLinesCount();
     char *users[size + 1];
+    char *contacts[size + 1];
     int n;
 
     int indexSocket = 0;
@@ -48,6 +59,8 @@ void* clientCommunication(void *data) {
 
     d->descriptors[index] = newsockfd;
 
+    char* myLogin = getLoginByIndex(users[index]);
+
     //char* user = strdup(users[index]);
     //char* login = strtok(user, " ");
 
@@ -57,8 +70,6 @@ void* clientCommunication(void *data) {
 
     readSocketServer(buffer, n, newsockfd);
     answer = strtok(buffer, "\n");
-
-    printf("%s\n", answer);
 
     switch (strtol(answer, &ptr, 10)) {
         case 1:
@@ -75,10 +86,7 @@ void* clientCommunication(void *data) {
             char* target = strtok(buffer, "\n");
 
             for (int i = 0; i < size; ++i) {
-                int length = strlen(users[i]);
-                char *user = (char*)malloc((length+1) * sizeof(char));
-                memcpy(user, users[i], length+1);
-                char* login = strtok(user, " ");
+                char* login = getLoginByIndex(users[i]);
 
                 if (strcmp(login, buffer) == 0){
                     targetIndex = i;
@@ -91,8 +99,8 @@ void* clientCommunication(void *data) {
                 writeSocketServer(n, newsockfd, msg);
             } else{
                 char* msg = "success";
-                writeSocketServer(n, newsockfd, msg);
                 readSocketServer(buffer, n, newsockfd);
+                strcat(buffer,myLogin);
                 writeSocketServer(n, d->descriptors[targetIndex], buffer);
             }
             break;
@@ -103,6 +111,35 @@ void* clientCommunication(void *data) {
         }
         case 4:
         {
+            char usrs[1000];
+            for (int i = 0; i < size; ++i) {
+                char* login = getLoginByIndex(users[i]);
+                printf("%s", login);
+                strcat(usrs,login);
+                strcat(usrs," ");
+            }
+            writeSocketServer(n,newsockfd, usrs);
+
+            readSocketServer(buffer,n,newsockfd);
+            char* target = strtok(buffer, "\n");
+            int targetIndex = -1;
+
+            for (int i = 0; i < size; ++i) {
+                char* login = getLoginByIndex(users[i]);
+
+                if (strcmp(login, buffer) == 0){
+                    targetIndex = i;
+                }
+            }
+
+            if (d->descriptors[targetIndex] != 0){
+                char msg[256];
+                strcat(msg, targetIndex);
+                strcat(msg, "|");
+                strcat(msg, myLogin);
+                strcat(msg," wants to be your contact. Accept(y|n) ?");
+                writeSocketServer(n,d->descriptors[targetIndex], msg);
+            }
             break;
         }
         case 5:
@@ -112,6 +149,34 @@ void* clientCommunication(void *data) {
         case 6:
         {
             break;
+        }
+        case 7:
+        {
+            break;
+        }
+        case 8:
+        {
+            readSocketServer(buffer,n,newsockfd);
+            char* response = strtok(buffer, "|");
+            int targetIndex = strtok(NULL, "\n");
+            char* target = getLoginByIndex(users[targetIndex]);
+            printf("%s",response);
+            if (strcmp(response,"y") == 0){
+                contacts[index] = strcat(contacts[index],target);
+                contacts[targetIndex] = strcat(contacts[targetIndex],myLogin);
+                contacts[index] = strcat(contacts[index],"/");
+                contacts[targetIndex] = strcat(contacts[targetIndex],"/");
+                writeToFileContact(contacts, size);
+                char msg[256];
+                strcat(msg, target);
+                strcat(msg," accept your contact request");
+                writeSocketServer(n, newsockfd, msg);
+            } else if(strcmp(response, "n") == 0){
+                char msg[256];
+                strcat(msg, target);
+                strcat(msg," did not accept your contact request");
+                writeSocketServer(n, newsockfd, msg);
+            }
         }
         case 9:
         {
@@ -123,6 +188,7 @@ void* clientCommunication(void *data) {
     }
 
     close(newsockfd);
+
 
     return 0;
 }

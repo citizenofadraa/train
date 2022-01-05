@@ -12,6 +12,14 @@ void writeToFile(char* tokenLogin, char* tokenPassword) {
     fclose(fp);
 }
 
+void writeToFileContact(char* contacts[], int size) {
+    fp = fopen("contacts.txt", "w+");
+    for (int i = 0; i < size; ++i) {
+        fprintf(fp, "%s\n", contacts[i]);
+    }
+    fclose(fp);
+}
+
 int getLinesCount(){
     char ch;
     int linesCount=0;

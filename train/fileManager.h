@@ -12,6 +12,7 @@
 extern FILE* fp;
 
 void writeToFile(char* tokenLogin, char* tokenPassword);
+void writeToFileContact(char* contacts[], int size);
 int getLinesCount();
 void readFile(char* users[]);
 void rewriteFile(char* users[], int size);

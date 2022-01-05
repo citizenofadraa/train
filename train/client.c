@@ -63,6 +63,7 @@ int main(int argc, char *argv[])
     printf("5 Delete contact\n");
     printf("6 Start group conversation\n");
     printf("7 Read message\n");
+    printf("8 Read request for contact\n");
     printf("9 Log out\n");
 
     bzero(buffer,256);
@@ -77,6 +78,7 @@ int main(int argc, char *argv[])
             }
         case 2:
         {
+            writeSocketClient(n, sockfd, "2");
             printf("Enter login of target: ");
             bzero(buffer,256);
             fgets(buffer, 255, stdin);
@@ -100,6 +102,15 @@ int main(int argc, char *argv[])
         }
         case 4:
         {
+            writeSocketClient(n, sockfd, "4");
+            readSocketClient(n,sockfd,buffer);
+            printf("All users: %s\n",buffer);
+            printf("Select user to join: \n");
+            bzero(buffer,256);
+            fgets(buffer, 255, stdin);
+            writeSocketClient(n, sockfd, buffer);
+            readSocketClient(n,sockfd, buffer);
+            printf("%s",buffer);
             break;
         }
         case 5:
@@ -112,9 +123,21 @@ int main(int argc, char *argv[])
         }
         case 7:
         {
+            writeSocketClient(n, sockfd, "7");
             readSocketClient(n, sockfd, buffer);
             printf("%s", buffer);
             break;
+        }
+        case 8:
+        {
+            readSocketClient(n,sockfd, buffer);
+            printf("%s \n", buffer);
+            char* sender = strtok(buffer, "|");
+            bzero(buffer,256);
+            fgets(buffer, 255, stdin);
+            strcat(buffer,"|");
+            strcat(buffer,sender);
+            writeSocketClient(n, sockfd, buffer);
         }
         case 9:
         {
