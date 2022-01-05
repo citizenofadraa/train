@@ -1,31 +1,11 @@
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "registrationManager.h"
+#include "signingManager.h"
 
-int writeSocket(int n, int sockfd, char* buffer){
-    n = write(sockfd, buffer, strlen(buffer));
-    if (n < 0)
-    {
-        perror("Error writing to socket");
-        return 5;
-    }
-    return 0;
-}
-
-int readSocket(int n, int sockfd, char* buffer){
-    bzero(buffer,256);
-    n = read(sockfd, buffer, 255);
-    if (n < 0)
-    {
-        perror("Error reading from socket");
-        return 6;
-    }
-}
 
 int main(int argc, char *argv[])
 {
@@ -33,6 +13,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in serv_addr;
     struct hostent* server;
 
+    char* answer;
     char buffer[256];
 
     if (argc < 3)
@@ -70,83 +51,78 @@ int main(int argc, char *argv[])
         return 4;
     }
 
-    printf("Do you have account(y|n)? \n");
+    registerUserClient(buffer, n, sockfd);
+
+    signInClient(buffer, n, sockfd);
+
+    printf("What do you want to do? (type the number next to your choice)\n");
+    printf("1 Delete account\n");
+    printf("2 Send message\n");
+    printf("3 Send file\n");
+    printf("4 Add contact\n");
+    printf("5 Delete contact\n");
+    printf("6 Start group conversation\n");
+    printf("7 Read message\n");
+    printf("9 Log out\n");
+
     bzero(buffer,256);
     fgets(buffer, 255, stdin);
-    char* answer = strtok(buffer, "\n");
+    char* ptr;
 
-    if(strcmp(answer,"n") == 0){
-        writeSocket(n, sockfd, buffer);
-        printf("Do you want register?(y|n) \n");
-        bzero(buffer,256);
-        fgets(buffer, 255, stdin);
-        answer = strtok(buffer, "\n");
-        if(strcmp(buffer,"n") == 0){
-            writeSocket(n, sockfd, buffer);
-            return 9;
-        } else{
-            writeSocket(n, sockfd, buffer);
-            readSocket(n, sockfd, buffer);
-            printf("%s \n",buffer);
-            bzero(buffer,256);
-            fgets(buffer, 255, stdin);
-            writeSocket(n, sockfd, buffer);
-
-            readSocket(n, sockfd, buffer);
-            if (strcmp(buffer,"not success") == 0){
-                printf("This login already exists \n");
-                return 11;
+    switch (strtol(buffer, &ptr, 10)) {
+        case 1:
+            {
+                writeSocketClient(n, sockfd, "1");
+                break;
             }
-
-            readSocket(n, sockfd, buffer);
-            printf("%s\n",buffer);
+        case 2:
+        {
+            printf("Enter login of target: ");
             bzero(buffer,256);
             fgets(buffer, 255, stdin);
-            writeSocket(n, sockfd, buffer);
+            writeSocketClient(n, sockfd, buffer);
+
+            readSocketClient(n, sockfd, buffer);
+            if (strcmp(buffer,"not success") != 0){
+                printf("Enter message: ");
+                bzero(buffer,256);
+                fgets(buffer, 255, stdin);
+                writeSocketClient(n, sockfd, buffer);
+                break;
+            } else {
+                printf("This login does not exists \n");
+                return 7;
+            }
         }
-    } else{
-        writeSocket(n, sockfd, buffer);
-    }
-
-
-    readSocket(n, sockfd, buffer);
-    printf("%s\n",buffer);
-    bzero(buffer,256);
-    fgets(buffer, 255, stdin);
-    answer = strtok(buffer, "\n");
-
-    if (strcmp(answer,"n")==0){
-        writeSocket(n, sockfd, buffer);
-        return 10;
-    } else{
-        writeSocket(n, sockfd, buffer);
-    }
-
-    printf("Enter login: \n");
-    bzero(buffer,256);
-    fgets(buffer, 255, stdin);
-
-    writeSocket(n, sockfd, buffer);
-    readSocket(n, sockfd, buffer);
-
-    if (strcmp(buffer,"not success") != 0){
-        printf("Login is OK \n");
-    } else {
-        printf("This login does not exists \n");
-        return 7;
-    }
-
-    printf("Please enter a password: ");
-    bzero(buffer,256);
-    fgets(buffer, 255, stdin);
-
-    writeSocket(n, sockfd, buffer);
-    readSocket(n, sockfd, buffer);
-    if (strcmp(buffer,"not success") != 0){
-        printf("Password is OK, you are signed in \n");
-    } else {
-        printf("This password is not good with login \n");
-        return 8;
+        case 3:
+        {
+            break;
+        }
+        case 4:
+        {
+            break;
+        }
+        case 5:
+        {
+            break;
+        }
+        case 6:
+        {
+            break;
+        }
+        case 7:
+        {
+            readSocketClient(n, sockfd, buffer);
+            printf("%s", buffer);
+            break;
+        }
+        case 9:
+        {
+            writeSocketClient(n, sockfd, "9");
+            break;
+        }
+        default:
+            break;
     }
 
     close(sockfd);
