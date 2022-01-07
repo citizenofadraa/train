@@ -44,6 +44,8 @@ int signInClient(char* buffer, int n, int sockfd) {
         printf("This password is not good with login \n");
         return 8;
     }
+
+    return 0;
 }
 
 int signInServer(char* buffer, int n, int newsockfd, int size, char* users[]) {
@@ -56,7 +58,7 @@ int signInServer(char* buffer, int n, int newsockfd, int size, char* users[]) {
     readSocketServer(buffer, n, newsockfd);
     char* signin = strtok(buffer, "\n");
     if (strcmp(signin,"n")==0){
-        return 10;
+        return -1;
     }
 
 
@@ -81,7 +83,7 @@ int signInServer(char* buffer, int n, int newsockfd, int size, char* users[]) {
         msg = "not success";
         writeSocketServer(n, newsockfd, msg);
         printf("You have no account with login %s \n", buffer);
-        return 7;
+        return -2;
     } else{
         msg = "success";
         writeSocketServer(n, newsockfd, msg);
@@ -101,7 +103,7 @@ int signInServer(char* buffer, int n, int newsockfd, int size, char* users[]) {
         msg = "not success";
         writeSocketServer(n, newsockfd, msg);
         printf("You have not account with password %s \n", password);
-        return 8;
+        return -3;
     } else{
         msg = "success";
         writeSocketServer(n, newsockfd, msg);

@@ -13,8 +13,11 @@ extern FILE* fp;
 
 void writeToFile(char* tokenLogin, char* tokenPassword);
 void writeToFileContact(char* contacts[], int size);
-int getLinesCount();
-void readFile(char* users[]);
+void createContacts();
+void createUsers();
+void registerContacts();
+int getLinesCount(char* file);
+void readFile(char* array[], char* path);
 void rewriteFile(char* users[], int size);
 
 #endif //TRAIN_FILEMANAGER_H
