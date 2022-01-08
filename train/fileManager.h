@@ -15,9 +15,11 @@ void writeToFile(char* tokenLogin, char* tokenPassword);
 void writeToFileContact(char* contacts[], int size);
 void createContacts();
 void createUsers();
+void createMessages();
 void registerContacts();
 int getLinesCount(char* file);
 void readFile(char* array[], char* path);
-void rewriteFile(char* users[], int size);
+void rewriteFile(char* array[], int size, char* path);
+void writeMessage(char* message);
 
 #endif //TRAIN_FILEMANAGER_H
