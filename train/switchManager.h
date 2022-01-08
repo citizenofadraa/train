@@ -5,6 +5,9 @@
 #ifndef TRAIN_SWITCHMANAGER_H
 #define TRAIN_SWITCHMANAGER_H
 
-void switchCase1(int index, int size, char* users[]);
+#include "socketManager.h"
+#include "fileManager.h"
+
+int switchClient(int n, int sockfd, char* buffer);
 
 #endif //TRAIN_SWITCHMANAGER_H

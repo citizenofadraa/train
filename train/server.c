@@ -24,10 +24,16 @@ void* clientCommunication(void *data) {
 
     D *d = data;
 
+    char* messages[256];
+    int messageIndex = 0;
+
+    char* requests[256];
+    int requestIndex = 0;
+
     int newsockfd = 0;
     char buffer[256];
 
-    int size = getLinesCount();
+    int size = getLinesCount("test.txt");
     char *users[size + 1];
     char *contacts[size + 1];
     int n;
@@ -46,155 +52,212 @@ void* clientCommunication(void *data) {
         exit(EXIT_FAILURE);
     }
 
-    readFile(users);
+    readFile(users, "test.txt");
+    readFile(contacts, "contacts.txt");
 
     registerUserServer(buffer, n, newsockfd, size, users);
 
-    readFile(users);
+    readFile(users, "test.txt");
+    readFile(contacts, "contacts.txt");
 
-    size = getLinesCount();
+    size = getLinesCount("test.txt");
 
     int index;
     index = signInServer(buffer, n, newsockfd, size, users);
 
-    d->descriptors[index] = newsockfd;
+    if (index > 0) {
 
-    char* myLogin = getLoginByIndex(users[index]);
+        d->descriptors[index] = newsockfd;
 
-    //char* user = strdup(users[index]);
-    //char* login = strtok(user, " ");
+        char* myLogin = getLoginByIndex(users[index]);
 
-    //printf("%s %s", user, login);
-    char* answer;
-    char* ptr;
+        //char* user = strdup(users[index]);
+        //char* login = strtok(user, " ");
 
-    readSocketServer(buffer, n, newsockfd);
-    answer = strtok(buffer, "\n");
+        //printf("%s %s", user, login);
+        char* answer;
+        char* ptr;
 
-    switch (strtol(answer, &ptr, 10)) {
-        case 1:
-        {
-            users[index] = NULL;
-            rewriteFile(users, size);
-            readFile(users);
-            break;
-        }
-        case 2:
-        {
-            int targetIndex = -1;
-            readSocketServer(buffer, n, newsockfd);
-            char* target = strtok(buffer, "\n");
+        readSocketServer(buffer, n, newsockfd);
+        answer = strtok(buffer, "\n");
 
-            for (int i = 0; i < size; ++i) {
-                char* login = getLoginByIndex(users[i]);
-
-                if (strcmp(login, buffer) == 0){
-                    targetIndex = i;
-                    printf("%d", targetIndex);
-                }
+        switch (strtol(answer, &ptr, 10)) {
+            case 1:
+            {
+                users[index] = NULL;
+                rewriteFile(users, size);
+                readFile(users, "test.txt");
+                break;
             }
-
-            if (targetIndex < 0){
-                char* msg = "not success";
-                writeSocketServer(n, newsockfd, msg);
-            } else{
-                char* msg = "success";
+            case 2:
+            {
+                int targetIndex = -1;
                 readSocketServer(buffer, n, newsockfd);
-                strcat(buffer,myLogin);
-                writeSocketServer(n, d->descriptors[targetIndex], buffer);
-            }
-            break;
-        }
-        case 3:
-        {
-            break;
-        }
-        case 4:
-        {
-            char usrs[1000];
-            for (int i = 0; i < size; ++i) {
-                char* login = getLoginByIndex(users[i]);
-                printf("%s", login);
-                strcat(usrs,login);
-                strcat(usrs," ");
-            }
-            writeSocketServer(n,newsockfd, usrs);
+                char* target = strtok(buffer, "\n");
 
-            readSocketServer(buffer,n,newsockfd);
-            char* target = strtok(buffer, "\n");
-            int targetIndex = -1;
+                for (int i = 0; i < size; ++i) {
+                    char* login = getLoginByIndex(users[i]);
 
-            for (int i = 0; i < size; ++i) {
-                char* login = getLoginByIndex(users[i]);
-
-                if (strcmp(login, buffer) == 0){
-                    targetIndex = i;
+                    if (strcmp(login, target) == 0){
+                        targetIndex = i;
+                        printf("%d", targetIndex);
+                    }
                 }
-            }
 
-            if (d->descriptors[targetIndex] != 0){
-                char msg[256];
-                strcat(msg, targetIndex);
-                strcat(msg, "|");
-                strcat(msg, myLogin);
-                strcat(msg," wants to be your contact. Accept(y|n) ?");
-                writeSocketServer(n,d->descriptors[targetIndex], msg);
+                if (targetIndex < 0){
+                    char* msg = "not success";
+                    writeSocketServer(n, newsockfd, msg);
+                } else {
+                    char* msg = "success";
+                    writeSocketServer(n, newsockfd, msg);
+                    readSocketServer(buffer, n, newsockfd);
+                    strcat(buffer, "|");
+                    strcat(buffer,myLogin);
+                    strcat(buffer, "|");
+                    strcat(buffer, getLoginByIndex(users[targetIndex]));
+                    strcpy(messages[messageIndex], buffer);
+                }
+                break;
             }
-            break;
-        }
-        case 5:
-        {
-            break;
-        }
-        case 6:
-        {
-            break;
-        }
-        case 7:
-        {
-            break;
-        }
-        case 8:
-        {
-            readSocketServer(buffer,n,newsockfd);
-            char* response = strtok(buffer, "|");
-            int targetIndex = strtok(NULL, "\n");
-            char* target = getLoginByIndex(users[targetIndex]);
-            printf("%s",response);
-            if (strcmp(response,"y") == 0){
-                contacts[index] = strcat(contacts[index],target);
-                contacts[targetIndex] = strcat(contacts[targetIndex],myLogin);
-                contacts[index] = strcat(contacts[index],"/");
-                contacts[targetIndex] = strcat(contacts[targetIndex],"/");
-                writeToFileContact(contacts, size);
-                char msg[256];
-                strcat(msg, target);
-                strcat(msg," accept your contact request");
-                writeSocketServer(n, newsockfd, msg);
-            } else if(strcmp(response, "n") == 0){
-                char msg[256];
-                strcat(msg, target);
-                strcat(msg," did not accept your contact request");
-                writeSocketServer(n, newsockfd, msg);
+            case 3:
+            {
+                break;
             }
+            case 4:
+            {
+                char usrs[1000];
+                for (int i = 0; i < size; ++i) {
+                    if (index != i) {
+                        char* login = getLoginByIndex(users[i]);
+                        strcat(usrs,login);
+                        strcat(usrs," ");
+                    }
+
+                }
+                writeSocketServer(n,newsockfd, usrs);
+
+                readSocketServer(buffer,n,newsockfd);
+                char* target = strtok(buffer, "\n");
+                int targetIndex = -1;
+
+                for (int i = 0; i < size; ++i) {
+                    char* login = getLoginByIndex(users[i]);
+
+                    if (strcmp(login, target) == 0){
+                        targetIndex = i;
+                    }
+                }
+
+                if (d->descriptors[targetIndex] != 0){
+                    char msg[256];
+                    /*strcat(msg, myLogin);
+                    strcat(msg," wants to be your contact. Accept(y|n) ?");*/
+                    writeSocketServer(n,d->descriptors[targetIndex], myLogin);
+                }
+
+                break;
+            }
+            case 5:
+            {
+                char* myContacts;
+                strcpy(myContacts, contacts[index]);
+                break;
+            }
+            case 6:
+            {
+                break;
+            }
+            case 7:
+            {
+                break;
+            }
+            case 8:
+            {
+
+                readSocketServer(buffer,n,newsockfd);
+                printf("%s", buffer);
+
+                char* confirm = strtok(buffer, "\n");
+                char* sender = strtok(NULL, "9");
+                char append[255];
+                char append2[255];
+
+                if (strcmp(confirm, "y") == 0) {
+
+                    int indexTarget = -1;
+                    for (int i = 0; i < (size); ++i) {
+                        int length = strlen(users[i]);
+                        char *user = (char*)malloc((length+1) * sizeof(char));
+                        memcpy(user, users[i], length+1);
+                        char* senderLogin = strtok(user, " ");
+
+                        if (strcmp(sender, senderLogin) == 0){
+                            indexTarget = i;
+                            break;
+                        }
+                    }
+
+                    strcat(append, "|");
+                    strcat(append, sender);
+                    strcat(append, contacts[index]);
+                    contacts[index] = strdup(append);
+
+                    strcat(append2, "|");
+                    strcat(append2, myLogin);
+                    strcat(append2, contacts[indexTarget]);
+                    contacts[indexTarget] = strdup(append2);
+
+                    writeToFileContact(contacts, size);
+                }
+                /*
+                printf("%s \n", buffer);
+                char* sender = strtok(buffer, "\n");
+                readSocketServer(buffer, n, newsockfd);
+                printf("%s \n", buffer);
+                int targetIndex = strtok(NULL, "\n");
+                char* target = getLoginByIndex(users[targetIndex]);
+                printf("%s",response);
+                if (strcmp(response,"y") == 0){
+                    contacts[index] = strcat(contacts[index],target);
+                    contacts[targetIndex] = strcat(contacts[targetIndex],myLogin);
+                    contacts[index] = strcat(contacts[index],"/");
+                    contacts[targetIndex] = strcat(contacts[targetIndex],"/");
+                    writeToFileContact(contacts, size);
+                    char msg[256];
+                    strcat(msg, target);
+                    strcat(msg," accept your contact request");
+                    writeSocketServer(n, newsockfd, msg);
+                } else if(strcmp(response, "n") == 0){
+                    char msg[256];
+                    strcat(msg, target);
+                    strcat(msg," did not accept your contact request");
+                    writeSocketServer(n, newsockfd, msg);
+                }*/
+                break;
+            }
+            case 9:
+            {
+                d->descriptors[index] = 0;
+                break;
+            }
+            default:
+                break;
         }
-        case 9:
-        {
-            d->descriptors[index] = 0;
-            break;
-        }
-        default:
-            break;
+
     }
 
     close(newsockfd);
-
 
     return 0;
 }
 
 int main(int argc, char *argv[])
 {
+    /*createContacts();
+    createUsers();
+
+    return 0;*/
+
     int sockfd;
 
     struct sockaddr_in serv_addr;
@@ -225,7 +288,7 @@ int main(int argc, char *argv[])
 
     listen(sockfd, 5);
 
-    int size = getLinesCount();
+    int size = getLinesCount("test.txt");
 
     pthread_t threadsApp[size + 1];
 

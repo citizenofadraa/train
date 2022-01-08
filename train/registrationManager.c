@@ -12,11 +12,9 @@ int registerUserServer(char* buffer, int n, int newsockfd, int size, char* users
 
     readSocketServer(buffer, n, newsockfd);
     char* haveAccount = strtok(buffer, "\n");
-    printf("%s", haveAccount);
     if (strcmp(haveAccount,"n")==0){
         readSocketServer(buffer, n, newsockfd);
         char* create = strtok(buffer, "\n");
-        printf("%s", buffer);
         if (strcmp(create,"n")==0){
             return 9;
         } else {
@@ -50,10 +48,9 @@ int registerUserServer(char* buffer, int n, int newsockfd, int size, char* users
             tokenPassword = strtok(buffer, "\n");
 
             writeToFile(tokenLogin, tokenPassword);
-
+            registerContacts();
         }
     }
-    printf("%s", buffer);
 }
 
 int registerUserClient(char* buffer, int n, int sockfd) {

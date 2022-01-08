@@ -15,15 +15,37 @@ void writeToFile(char* tokenLogin, char* tokenPassword) {
 void writeToFileContact(char* contacts[], int size) {
     fp = fopen("contacts.txt", "w+");
     for (int i = 0; i < size; ++i) {
-        fprintf(fp, "%s\n", contacts[i]);
+        if (contacts[i] == NULL) {
+            fprintf(fp, "\n");
+        } else {
+            fprintf(fp, "%s", contacts[i]);
+        }
     }
     fclose(fp);
 }
 
-int getLinesCount(){
+void createContacts(){
+    fp = fopen("contacts.txt", "w+");
+    fprintf(fp, "|\n");
+    fclose(fp);
+}
+
+void createUsers(){
+    fp = fopen("test.txt", "w+");
+    fprintf(fp, "user password\n");
+    fclose(fp);
+}
+
+void registerContacts(){
+    fp = fopen("contacts.txt", "a");
+    fprintf(fp, "|\n");
+    fclose(fp);
+}
+
+int getLinesCount(char* file){
     char ch;
     int linesCount=0;
-    fp = fopen("test.txt", "r");
+    fp = fopen(file, "r");
     while((ch=fgetc(fp))!=EOF) {
         if(ch=='\n')
             linesCount++;
@@ -33,16 +55,16 @@ int getLinesCount(){
     return linesCount;
 }
 
-void readFile(char* users[]) {
+void readFile(char* array[], char* path) {
 
     char buff[255];
     int index = 0;
 
-    fp = fopen("test.txt", "r");
+    fp = fopen(path, "r");
     while(fgets(buff, 255, fp)){
         int length = strlen(buff);
-        users[index] = (char*)malloc((length+1) * sizeof(char));
-        memcpy(users[index], buff, length+1);
+        array[index] = (char*)malloc((length+1) * sizeof(char));
+        memcpy(array[index], buff, length+1);
         index++;
     }
     fclose(fp);

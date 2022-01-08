@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-int signInClient();
-int signInServer();
+int signInClient(char* buffer, int n, int sockfd);
+int signInServer(char* buffer, int n, int newsockfd, int size, char* users[]);
 
 #endif //TRAIN_SIGNINGMANAGER_H
