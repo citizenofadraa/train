@@ -8,3 +8,4 @@ add_executable(server server.c fileManager.c socketManager.c registrationManager
 add_executable(client client.c fileManager.c socketManager.c registrationManager.c signingManager.c switchManager.c)
 target_link_libraries(server pthread)
 target_link_libraries(client pthread)
+#[[configure_file(contacts.txt <output> COPYONLY)]]

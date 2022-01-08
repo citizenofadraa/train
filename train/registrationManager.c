@@ -83,7 +83,7 @@ int registerUserClient(char* buffer, int n, int sockfd) {
                 return 11;
             }
 
-            printf("Enter login: ");
+            printf("Enter password: ");
             bzero(buffer,256);
             fgets(buffer, 255, stdin);
             writeSocketClient(n, sockfd, buffer);

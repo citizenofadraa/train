@@ -36,6 +36,12 @@ void createUsers(){
     fclose(fp);
 }
 
+void createMessages(){
+    fp = fopen("messages.txt", "w+");
+    fprintf(fp, "|\n");
+    fclose(fp);
+}
+
 void registerContacts(){
     fp = fopen("contacts.txt", "a");
     fprintf(fp, "|\n");
@@ -70,13 +76,19 @@ void readFile(char* array[], char* path) {
     fclose(fp);
 }
 
-void rewriteFile(char* users[], int size) {
-    fp = fopen("test.txt", "w+");
+void rewriteFile(char* array[], int size, char* path) {
+    fp = fopen(path, "w+");
     for (int i = 0; i < size; ++i) {
-        if (users[i] != NULL) {
-            fprintf(fp, "%s", users[i]);
+        if (array[i] != NULL) {
+            fprintf(fp, "%s", array[i]);
         }
     }
+    fclose(fp);
+}
+
+void writeMessage(char* message){
+    fp = fopen("messages.txt", "a");
+    fprintf(fp, "%s\n", message);
     fclose(fp);
 }
 
