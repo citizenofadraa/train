@@ -62,8 +62,6 @@ void* clientCommunication(void *data) {
         exit(EXIT_FAILURE);
     }
 
-
-
     readFile(users, "test.txt");
     readFile(contacts, "contacts.txt");
 
@@ -89,7 +87,7 @@ void* clientCommunication(void *data) {
         int messagesSize = getLinesCount("messages.txt");
         readFile(messages, "messages.txt");
         char myMessages[10000];
-        for (int i = 0; i < messagesSize-1; ++i) {
+        for (int i = 0; i < messagesSize; ++i) {
             char fullMsg[255];
             strcpy(fullMsg, messages[i]);
             char* reciever = strtok(fullMsg,"|");
@@ -145,6 +143,7 @@ void* clientCommunication(void *data) {
                 strcpy(msg, contacts[index]);
                 writeSocketServer(n, newsockfd, msg);
                 int targetIndex = -1;
+
                 readSocketServer(buffer, n, newsockfd);
                 char* target = strtok(buffer, "\n");
 
@@ -157,18 +156,33 @@ void* clientCommunication(void *data) {
                 }
 
                 if (targetIndex < 0){
-                    char* msg = "not success";
-                    writeSocketServer(n, newsockfd, msg);
+                    writeSocketServer(n, newsockfd, "not sucess");
                 } else {
                     char message[1000];
                     strcat(message,target);
-                    char* msg = "success";
-                    writeSocketServer(n, newsockfd, msg);
-                    readSocketServer(buffer, n, newsockfd);
                     strcat(message, "|");
                     strcat(message,myLogin);
                     strcat(message, ": ");
-                    strcat(message, buffer);
+                    writeSocketServer(n, newsockfd, "sucess");
+                    readSocketServer(buffer, n, newsockfd);
+
+                    char buff[256];
+                    strcpy(buff, buffer);
+
+                    writeSocketServer(n, newsockfd, "sucess");
+                    readSocketServer(buffer, n, newsockfd);
+
+                    char* confirm = strtok(buffer, "\n");
+                    if (strcmp(confirm, "y") == 0) {
+                        for (int i = 0; buff[i] != '\n' ; ++i) {
+                            buff[i] += 3;
+                        }
+                        strcat(message, strtok(buff, "\n"));
+                        strcat(message, " ");
+                        strcat(message, "cesarCipher3\n");
+                    } else {
+                        strcat(message, buff);
+                    }
                     writeMessage(message);
                 }
                 break;
@@ -239,7 +253,7 @@ void* clientCommunication(void *data) {
                 char newTargets[150];
                 strcat(newTargets,"|");
 
-                char* contact = strtok(targetContacts, "|");
+                contact = strtok(targetContacts, "|");
                 while (contact != NULL){
                     if (strcmp(myLogin, contact) != 0 && strcmp(contact,"\n") != 0){
                         strcat(newTargets,contact);
@@ -255,7 +269,6 @@ void* clientCommunication(void *data) {
                 writeToFileContact(contacts, size);
                 readFile(contacts, "contacts.txt");
                 myConSize = 0;
-                char con[255];
                 strcpy(con, contacts[index]);
                 char* contac = strtok(con, "|");
                 while (contac != NULL){
@@ -272,6 +285,24 @@ void* clientCommunication(void *data) {
             }
             case 7:
             {
+                messagesSize = getLinesCount("messages.txt");
+                readFile(messages, "messages.txt");
+                for (int i = 0; i < messagesSize; ++i) {
+                    char fullMsg[255];
+                    strcpy(fullMsg, messages[i]);
+                    char* reciever = strtok(fullMsg,"|");
+                    char* messag = strtok(NULL, "\n");
+                    if (strcmp(reciever, myLogin) == 0){
+                        strcat(myMessages,messag);
+                        strcat(myMessages, "\n");
+                        messages[i] = NULL;
+                    }
+                }
+
+                printf("%s", myMessages);
+                writeSocketServer(n,newsockfd, myMessages);
+
+                rewriteFile(messages, messagesSize, "messages.txt");
                 break;
             }
             case 8:
@@ -350,6 +381,7 @@ int main(int argc, char *argv[])
     /*createContacts();
     createUsers();
     createMessages();
+
     return 0;*/
 
     int sockfd;

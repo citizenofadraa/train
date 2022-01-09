@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 #include "registrationManager.h"
 #include "signingManager.h"
 #include "switchManager.h"
@@ -105,11 +106,18 @@ int main(int argc, char *argv[])
                     bzero(buffer,256);
                     fgets(buffer, 255, stdin);
                     writeSocketClient(n, sockfd, buffer);
+
+                    readSocketClient(n, sockfd, buffer);
+                    printf("Send a ciphered message? (y|n)\n");
+                    bzero(buffer,256);
+                    fgets(buffer, 255, stdin);
+                    writeSocketClient(n, sockfd, buffer);
                     break;
                 } else {
                     printf("You cannot send message to this user!\n");
                     return 7;
                 }
+
             }
             case 3:
             {
@@ -149,7 +157,8 @@ int main(int argc, char *argv[])
             {
                 writeSocketClient(n, sockfd, "7");
                 readSocketClient(n, sockfd, buffer);
-                printf("%s", buffer);
+                printf("Your messages:\n");
+                printf("%s",buffer);
                 break;
             }
             case 8:

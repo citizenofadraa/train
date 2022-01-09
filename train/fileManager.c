@@ -88,7 +88,7 @@ void rewriteFile(char* array[], int size, char* path) {
 
 void writeMessage(char* message){
     fp = fopen("messages.txt", "a");
-    fprintf(fp, "%s\n", message);
+    fprintf(fp, "%s", message);
     fclose(fp);
 }
 
