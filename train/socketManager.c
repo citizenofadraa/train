@@ -44,3 +44,13 @@ int writeSocketClient(int n, int sockfd, char* buffer) {
     }
     return 0;
 }
+
+void sendFile(FILE *fp1, int sockfd, int n) {
+    char data[1000] = {0};
+
+    while(fgets(data, 1000, fp1) != NULL) {
+        writeSocketClient(n, sockfd, data);
+    }
+    writeSocketClient(n, sockfd, "end");
+    bzero(data, 1000);
+}

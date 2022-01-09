@@ -9,8 +9,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern FILE* fp;
-
 void writeToFile(char* tokenLogin, char* tokenPassword);
 void writeToFileContact(char* contacts[], int size);
 void createContacts();
@@ -18,7 +16,9 @@ void createUsers();
 void createMessages();
 void registerContacts();
 int getLinesCount(char* file);
-void readFile(char* array[], char* path);
+void readFileUsers(char* array[]);
+void readFileContacts(char* array[]);
+void readFileMessages(char* array[]);
 void rewriteFile(char* array[], int size, char* path);
 void writeMessage(char* message);
 

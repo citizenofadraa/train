@@ -7,7 +7,6 @@
 #include "signingManager.h"
 #include "switchManager.h"
 
-
 int main(int argc, char *argv[])
 {
 
@@ -15,7 +14,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in serv_addr;
     struct hostent* server;
 
-    char* answer;
+    char* answer = "";
     char buffer[256];
 
     if (argc < 3)
@@ -57,7 +56,6 @@ int main(int argc, char *argv[])
 
     int status = signInClient(buffer, n, sockfd);
 
-    writeSocketClient(n, sockfd, "wait");
     readSocketClient(n, sockfd, buffer);
     printf("Your messages:\n");
     printf("%s",buffer);
@@ -66,12 +64,11 @@ int main(int argc, char *argv[])
         printf("What do you want to do? (type the number next to your choice)\n");
         printf("1 Delete account\n");
         printf("2 Send message\n");
-        printf("3 Send file\n");
-        printf("4 Add contact\n");
-        printf("5 Delete contact\n");
-        printf("6 Start group conversation\n");
-        printf("7 Read message\n");
-        printf("8 Read request for contact\n");
+        printf("3 Add contact\n");
+        printf("4 Delete contact\n");
+        printf("5 Start group conversation\n");
+        printf("6 Read message\n");
+        printf("7 Read request for contact\n");
         printf("9 Log out\n");
 
         bzero(buffer,256);
@@ -94,28 +91,34 @@ int main(int argc, char *argv[])
                 writeSocketClient(n, sockfd, "2");
                 readSocketClient(n, sockfd, buffer);
                 printf("Your contacts: %s", buffer);
-                printf("Enter login of target: ");
+
+                while (strcmp(answer, "0") != 0) {
+                    printf("Enter login of target (to end type 0): ");
+                    bzero(buffer,256);
+                    fgets(buffer, 255, stdin);
+                    answer = strtok(strdup(buffer), "\n");
+                    writeSocketClient(n, sockfd, buffer);
+                    readSocketClient(n, sockfd, buffer);
+
+                    if (strcmp(buffer,"not success") == 0) {
+                        printf("You cannot send message to this user!\n");
+                    }
+                }
+
+                printf("Enter message: ");
                 bzero(buffer,256);
                 fgets(buffer, 255, stdin);
                 writeSocketClient(n, sockfd, buffer);
 
                 readSocketClient(n, sockfd, buffer);
-                if (strcmp(buffer,"not success") != 0){
-                    printf("Enter message: ");
-                    bzero(buffer,256);
-                    fgets(buffer, 255, stdin);
-                    writeSocketClient(n, sockfd, buffer);
-                    break;
-                } else {
-                    printf("You cannot send message to this user!\n");
-                    return 7;
-                }
+                printf("Send a ciphered message? (y|n)\n");
+                bzero(buffer,256);
+                fgets(buffer, 255, stdin);
+                writeSocketClient(n, sockfd, buffer);
+                break;
+
             }
             case 3:
-            {
-                break;
-            }
-            case 4:
             {
                 writeSocketClient(n, sockfd, "4");
                 readSocketClient(n,sockfd,buffer);
@@ -130,7 +133,7 @@ int main(int argc, char *argv[])
                 writeSocketClient(n, sockfd, buffer);
                 break;
             }
-            case 5:
+            case 4:
             {
                 writeSocketClient(n, sockfd, "5");
                 readSocketClient(n, sockfd, buffer);
@@ -141,18 +144,37 @@ int main(int argc, char *argv[])
                 writeSocketClient(n, sockfd, buffer);
                 break;
             }
-            case 6:
+            case 5:
             {
+                writeSocketClient(n, sockfd, "6");
+                readSocketClient(n, sockfd, buffer);
+                printf("Your contacts: %s", buffer);
+
+                printf("Enter login of target (to end type 0): ");
+                bzero(buffer,256);
+                fgets(buffer, 255, stdin);
+                writeSocketClient(n, sockfd, buffer);
+
+                printf("Input file name: \n");
+                bzero(buffer,256);
+                fgets(buffer, 255, stdin);
+                FILE *fp1;
+                fp1 = fopen(strtok(buffer, "\n"), "r");
+                if (fp1 != NULL) {
+                    sendFile(fp1, sockfd, n);
+                }
+                fclose(fp1);
                 break;
             }
-            case 7:
+            case 6:
             {
                 writeSocketClient(n, sockfd, "7");
                 readSocketClient(n, sockfd, buffer);
-                printf("%s", buffer);
+                printf("Your messages:\n");
+                printf("%s",buffer);
                 break;
             }
-            case 8:
+            case 7:
             {
                 writeSocketClient(n, sockfd, "8");
                 readSocketClient(n,sockfd, buffer);
