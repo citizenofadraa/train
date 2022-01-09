@@ -16,5 +16,6 @@ int readSocketServer(char *buffer, int n, int newsockfd);
 int writeSocketServer(int n, int newsockfd, char* msg);
 int readSocketClient(int n, int sockfd, char* buffer);
 int writeSocketClient(int n, int sockfd, char* msg);
+void sendFile(FILE *fp1, int sockfd, int n);
 
 #endif //TRAIN_SOCKETMANAGER_H

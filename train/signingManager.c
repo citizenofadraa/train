@@ -11,10 +11,10 @@ int signInClient(char* buffer, int n, int sockfd) {
     fgets(buffer, 255, stdin);
     char* answer = strtok(buffer, "\n");
 
-    if (strcmp(answer,"n")==0){
+    if (strcmp(answer,"n") == 0){
         writeSocketClient(n, sockfd, buffer);
         return 10;
-    } else{
+    } else {
         writeSocketClient(n, sockfd, buffer);
     }
 
@@ -40,6 +40,7 @@ int signInClient(char* buffer, int n, int sockfd) {
     readSocketClient(n, sockfd, buffer);
     if (strcmp(buffer,"not success") != 0){
         printf("Password is OK, you are signed in \n");
+        writeSocketClient(n, sockfd, "wait");
     } else {
         printf("This password is not good with login \n");
         return 8;
@@ -51,14 +52,14 @@ int signInClient(char* buffer, int n, int sockfd) {
 int signInServer(char* buffer, int n, int newsockfd, int size, char* users[]) {
 
     char* msg;
-    char* tokenLogin;
-    char* tokenPassword;
+    char tokenLogin[1000];
+    char tokenPassword[1000];
     int index = 0;
 
     readSocketServer(buffer, n, newsockfd);
     char* signin = strtok(buffer, "\n");
     if (strcmp(signin,"n")==0){
-        return -1;
+        return 100;
     }
 
 
@@ -68,15 +69,20 @@ int signInServer(char* buffer, int n, int newsockfd, int size, char* users[]) {
         int length = strlen(users[i]);
         char *user = (char*)malloc((length+1) * sizeof(char));
         memcpy(user, users[i], length+1);
-        tokenLogin = strtok(user, " ");
-        tokenPassword = strtok(NULL, " ");
+        char* tokens = strdup(user);
+        strcpy(tokenLogin, strtok(tokens, " "));
+        strcpy(tokenPassword, strtok(NULL, " "));
         char* login = strtok(buffer, "\n");
 
         if (strcmp(buffer, tokenLogin) == 0){
             exists = true;
             index = i;
+            free(user);
+            free(tokens);
             break;
         }
+        free(user);
+        free(tokens);
     }
 
     if (exists == false){
@@ -92,7 +98,7 @@ int signInServer(char* buffer, int n, int newsockfd, int size, char* users[]) {
     readSocketServer(buffer,n,newsockfd);
     exists = false;
 
-    tokenPassword = strtok(tokenPassword, "\n");
+    strcpy(tokenPassword, strtok(tokenPassword, "\n"));
     char* password = strtok(buffer, "\n");
 
     if (strcmp(buffer, tokenPassword) == 0){
