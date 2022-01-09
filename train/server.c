@@ -8,6 +8,7 @@
 
 typedef struct data {
     int sockfd;
+    pthread_mutex_t *mutex;
     int descriptors[50];
 } D;
 
@@ -93,7 +94,9 @@ void* clientCommunication(void *data) {
 
     if (index > -1 && index < 100) {
 
+        pthread_mutex_lock(d->mutex);
         d->descriptors[index] = newsockfd;
+        pthread_mutex_unlock(d->mutex);
 
         char* myLogin = getLoginByIndex(users[index]);
         char* answer;
@@ -219,11 +222,13 @@ void* clientCommunication(void *data) {
             {
                 char usrs[1000];
                 for (int i = 0; i < size; ++i) {
+                    pthread_mutex_lock(d->mutex);
                     if (index != i && d->descriptors[i] > 0 ) {
                         char* login = getLoginByIndex(users[i]);
                         strcat(usrs,login);
                         strcat(usrs," ");
                     }
+                    pthread_mutex_unlock(d->mutex);
                 }
                 writeSocketServer(n,newsockfd, usrs);
 
@@ -246,12 +251,14 @@ void* clientCommunication(void *data) {
                     }
                 }
 
+                pthread_mutex_lock(d->mutex);
                 if (d->descriptors[targetIndex] != 0 && isContact == false){
                     char msg[256];
                     writeSocketServer(n, d->descriptors[targetIndex], myLogin);
                 } else{
                     writeSocketServer(n, d->descriptors[targetIndex], "noone");
                 }
+                pthread_mutex_unlock(d->mutex);
                 break;
             }
             case 4:
@@ -344,7 +351,9 @@ void* clientCommunication(void *data) {
                     int trgtIndex = getTargetIndex(target[i], size, users);
                     FILE *recv = fopen("recv.txt", "r");
                     if (recv != NULL) {
+                        pthread_mutex_lock(d->mutex);
                         sendFile(recv, d->descriptors[trgtIndex], n);
+                        pthread_mutex_unlock(d->mutex);
                     }
                     fclose(recv);
                 }
@@ -462,6 +471,9 @@ int main(int argc, char *argv[])
 
     struct sockaddr_in serv_addr;
 
+    pthread_mutex_t mutex;
+    pthread_mutex_init(&mutex, NULL);
+
     if (argc < 2)
     {
         fprintf(stderr,"usage %s port\n", argv[0]);
@@ -495,7 +507,7 @@ int main(int argc, char *argv[])
     int descriptors[10];
     descriptors[0] = 0;
 
-    D data = {sockfd, *descriptors};
+    D data = {sockfd, &mutex, *descriptors};
 
     for (int i = 0; i < size + 1; ++i) {
         pthread_create(&threadsApp[i], NULL, &clientCommunication, &data);
@@ -508,6 +520,8 @@ int main(int argc, char *argv[])
     for (int i = 0; i < 10; ++i) {
         free(&descriptors[i]);
     }
+
+    pthread_mutex_destroy(&mutex);
 
     close(sockfd);
 }
